@@ -1560,11 +1560,9 @@ var PHOTOS=["photos/01.jpg","photos/02.jpg","photos/03.jpg","photos/04.jpg","pho
 
   /* ---------- 방명록 (GUEST BOOK) ---------- */
   (function(){
-    var KEY = 'jooha-haein-guestbook-v2';
+    /* Google Apps Script 웹 앱 — 모든 하객이 같은 목록을 보고 쓴다 */
+    var GUESTBOOK_API = 'https://script.google.com/macros/s/AKfycbwPO-PFKGTvpPGX7p-fR3BAzWiXkkT1MH2qS4DtIBe7Ywd9P3OfKkXumoBpxnF21-xs/exec';
     var PER = 4;                                  // 한 페이지에 4개 (2열 × 2행)
-
-    /* 기본값은 공란 — 미리 넣은 예시 글 없이 하객이 남긴 글만 보인다 */
-    var SEED = [];
 
     var TRASH = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9.6 7V5.2h4.8V7"/><path d="M6.7 7l.75 12.1h9.1L17.3 7"/><path d="M10.2 10.7v5.4M13.8 10.7v5.4"/></svg>';
     var ARR_L = '<svg width="8" height="15" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6.4 1.4L1.6 7l4.8 5.6"/></svg>';
@@ -1574,36 +1572,16 @@ var PHOTOS=["photos/01.jpg","photos/02.jpg","photos/03.jpg","photos/04.jpg","pho
     var grid = document.getElementById('gbGrid');
     if(!nav || !grid) return;
 
-    var store = {added:[], removed:[]};
-    try{
-      var raw = localStorage.getItem(KEY);
-      if(raw){
-        var o = JSON.parse(raw);
-        if(o && typeof o === 'object'){
-          if(Array.isArray(o.added)) store.added = o.added;
-          if(Array.isArray(o.removed)) store.removed = o.removed;
-        }
-      }
-    }catch(e){}
-    function save(){
-      try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){}
-    }
-
+    var items = [];                               // 최신순 — 서버가 최신순으로 돌려준다
     var page = 0;
-    function list(){
-      var gone = {};
-      store.removed.forEach(function(id){ gone[id] = 1; });
-      var out = store.added.slice().reverse().concat(SEED);
-      return out.filter(function(m){ return m && !gone[m.id]; });
-    }
+
     function esc(s){
-      return String(s).replace(/[&<>"']/g, function(c){
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
         return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
       });
     }
 
     function render(){
-      var items = list();
       var pages = Math.max(1, Math.ceil(items.length / PER));
       if(page > pages - 1) page = pages - 1;
       if(page < 0) page = 0;
@@ -1640,7 +1618,7 @@ var PHOTOS=["photos/01.jpg","photos/02.jpg","photos/03.jpg","photos/04.jpg","pho
           nums.push(0);
           if(start > 1) nums.push(-1);
         }
-        for(var k = start; k <= end; k++) nums.push(k);
+        for(var j = start; j <= end; j++) nums.push(j);
         if(end < pages - 1){
           if(end < pages - 2) nums.push(-2);
           nums.push(pages - 1);
@@ -1670,7 +1648,52 @@ var PHOTOS=["photos/01.jpg","photos/02.jpg","photos/03.jpg","photos/04.jpg","pho
       render();
     });
 
-    /* 작성 모달 */
+    /* ---------- 서버 통신 ---------- */
+    function apiGet(){
+      return fetch(GUESTBOOK_API + '?t=' + Date.now(), { method:'GET', cache:'no-store' })
+        .then(function(r){
+          if(!r.ok) throw new Error('http ' + r.status);
+          return r.json();
+        })
+        .then(function(d){
+          if(!d || d.ok !== true || !Array.isArray(d.items)) throw new Error('bad response');
+          return d.items.filter(function(m){ return m && m.id != null; }).map(function(m){
+            return { id: String(m.id), name: String(m.name == null ? '' : m.name), msg: String(m.msg == null ? '' : m.msg), date: m.date || '' };
+          });
+        });
+    }
+    function apiPost(payload){
+      /* CORS preflight를 피하려고 text/plain 으로 보낸다 (Apps Script 표준 방식) */
+      return fetch(GUESTBOOK_API, {
+        method:'POST',
+        headers:{ 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      }).then(function(r){
+        if(!r.ok) throw new Error('http ' + r.status);
+        return r.json();
+      }).then(function(d){
+        if(!d || typeof d !== 'object') throw new Error('bad response');
+        return d;
+      });
+    }
+
+    var adding = false, deleting = false;
+    function busy(form, on, label){
+      var b = form.querySelector('.gb-submit');
+      if(!b) return;
+      if(on){
+        b.setAttribute('data-idle', b.textContent);
+        b.textContent = label;
+        b.disabled = true;
+        form.classList.add('is-busy');
+      } else {
+        if(b.getAttribute('data-idle')) b.textContent = b.getAttribute('data-idle');
+        b.disabled = false;
+        form.classList.remove('is-busy');
+      }
+    }
+
+    /* ---------- 작성 모달 ---------- */
     var modal = document.getElementById('gbModal');
     var form = document.getElementById('gbForm');
     var nameEl = document.getElementById('gbName');
@@ -1697,24 +1720,42 @@ var PHOTOS=["photos/01.jpg","photos/02.jpg","photos/03.jpg","photos/04.jpg","pho
 
     form.addEventListener('submit', function(e){
       e.preventDefault();
+      if(adding) return;
       var name = nameEl.value.trim();
       var pw = pwEl.value.trim();
       var msg = msgEl.value.replace(/^[\s\n]+|[\s\n]+$/g, '');
       if(!name){ toast('이름을 입력해 주세요'); nameEl.focus(); return; }
       if(!pw){ toast('비밀번호를 입력해 주세요'); pwEl.focus(); return; }
       if(!msg){ toast('메시지를 입력해 주세요'); msgEl.focus(); return; }
-      store.added.push({id:'u' + Date.now(), name:name, msg:msg, pw:pw});
-      save();
-      closeModal(modal);
-      page = 0;
-      render();
-      toast('축하 메시지를 남겼어요');
+
+      adding = true;
+      busy(form, true, '등록 중…');
+      apiPost({ action:'add', name:name, msg:msg, pw:pw }).then(function(d){
+        if(!d.ok) throw new Error(d.error || 'fail');
+        var it = d.item || {};
+        items.unshift({
+          id: it.id != null ? String(it.id) : 'x' + Date.now(),
+          name: it.name != null ? String(it.name) : name,
+          msg: it.msg != null ? String(it.msg) : msg,
+          date: it.date || ''
+        });
+        delForm.reset();
+        closeModal(modal);
+        form.reset();
+        page = 0;
+        render();
+        toast('축하 메시지가 등록되었어요');
+      }).catch(function(){
+        toast('등록하지 못했어요. 잠시 후 다시 시도해 주세요');
+      }).then(function(){
+        adding = false;
+        busy(form, false);
+      });
     });
 
-    /* 삭제 모달 */
+    /* ---------- 삭제 모달 ---------- */
     var delModal = document.getElementById('gbDelModal');
     var delForm = document.getElementById('gbDelForm');
-    var delPwField = document.getElementById('gbDelPwField');
     var delPw = document.getElementById('gbDelPw');
     var delHint = document.getElementById('gbDelHint');
     var delTarget = null;
@@ -1724,22 +1765,13 @@ var PHOTOS=["photos/01.jpg","photos/02.jpg","photos/03.jpg","photos/04.jpg","pho
       if(!b) return;
       var id = b.getAttribute('data-id');
       var target = null;
-      store.added.forEach(function(m){ if(m.id === id) target = m; });
-      if(!target){
-        SEED.forEach(function(m){ if(m.id === id) target = m; });
-      }
+      items.forEach(function(m){ if(m.id === id) target = m; });
       if(!target) return;
       delTarget = target;
       delForm.reset();
-      if(target.pw){
-        delPwField.style.display = '';
-        delHint.textContent = '등록할 때 정한 비밀번호를 입력해 주세요';
-      } else {
-        delPwField.style.display = 'none';
-        delHint.textContent = '이 메시지를 삭제할까요?';
-      }
+      delHint.textContent = '등록할 때 정한 비밀번호를 입력해 주세요';
       openModal(delModal);
-      if(target.pw) setTimeout(function(){ delPw.focus(); }, 80);
+      setTimeout(function(){ delPw.focus(); }, 80);
     });
 
     document.getElementById('gbDelCancel').addEventListener('click', function(){ closeModal(delModal); });
@@ -1747,22 +1779,32 @@ var PHOTOS=["photos/01.jpg","photos/02.jpg","photos/03.jpg","photos/04.jpg","pho
 
     delForm.addEventListener('submit', function(e){
       e.preventDefault();
-      if(!delTarget) return;
-      if(delTarget.pw && delPw.value.trim() !== String(delTarget.pw)){
-        toast('비밀번호가 맞지 않아요');
-        delPw.focus();
-        return;
-      }
-      if(delTarget.pw){
-        store.added = store.added.filter(function(m){ return m.id !== delTarget.id; });
-      } else {
-        store.removed.push(delTarget.id);
-      }
-      save();
-      delTarget = null;
-      closeModal(delModal);
-      render();
-      toast('메시지를 삭제했어요');
+      if(deleting || !delTarget) return;
+      var pw = delPw.value.trim();
+      if(!pw){ toast('비밀번호를 입력해 주세요'); delPw.focus(); return; }
+      var targetId = delTarget.id;
+
+      deleting = true;
+      busy(delForm, true, '삭제 중…');
+      apiPost({ action:'delete', id:targetId, pw:pw }).then(function(d){
+        if(d && d.ok){
+          items = items.filter(function(m){ return m.id !== targetId; });
+          delTarget = null;
+          closeModal(delModal);
+          render();
+          toast('삭제되었어요');
+        } else if(d && d.error === 'wrong_pw'){
+          toast('비밀번호가 일치하지 않아요');
+          delPw.focus();
+        } else {
+          toast('삭제하지 못했어요. 잠시 후 다시 시도해 주세요');
+        }
+      }).catch(function(){
+        toast('삭제하지 못했어요. 잠시 후 다시 시도해 주세요');
+      }).then(function(){
+        deleting = false;
+        busy(delForm, false);
+      });
     });
 
     document.addEventListener('keydown', function(e){
@@ -1771,7 +1813,26 @@ var PHOTOS=["photos/01.jpg","photos/02.jpg","photos/03.jpg","photos/04.jpg","pho
       else if(modal.classList.contains('open')) closeModal(modal);
     });
 
-    render();
+    /* ---------- 첫 로드: 서버 목록 불러오기 ---------- */
+    function load(){
+      grid.classList.add('is-empty');
+      nav.style.display = 'none';
+      nav.innerHTML = '';
+      grid.innerHTML = '<p class="gb-empty">축하 메시지를 불러오는 중이에요…</p>';
+      apiGet().then(function(list){
+        items = list;
+        page = 0;
+        render();
+      }).catch(function(){
+        items = [];
+        page = 0;
+        grid.classList.add('is-empty');
+        nav.style.display = 'none';
+        nav.innerHTML = '';
+        grid.innerHTML = '<p class="gb-empty">축하 메시지를 불러오지 못했어요.<br>잠시 후 새로고침해 주세요.</p>';
+      });
+    }
+    load();
   })();
 
   /* ---------- 공유 ---------- */
