@@ -1044,7 +1044,7 @@ details[open] .chev{transform:translateY(2px) rotate(225deg);}
       </div>
 
       <div class="map-buttons reveal">
-        <a id="linkNaver" href="https://map.naver.com/index.nhn?elat=37.496085&elng=127.033009&etext=%EC%84%B8%EC%9D%B8%ED%8A%B8%EB%A9%94%EB%A6%AC%EC%97%98&menu=route" target="_blank" rel="noopener">네이버 지도</a>
+        <a id="linkNaver" href="https://map.naver.com/p/search/%EC%84%B8%EC%9D%B8%ED%8A%B8%EB%A9%94%EB%A6%AC%EC%97%98" target="_blank" rel="noopener">네이버 지도</a>
         <a id="linkKakao" href="https://map.kakao.com/link/to/%EC%84%B8%EC%9D%B8%ED%8A%B8%EB%A9%94%EB%A6%AC%EC%97%98,37.496085,127.033009" target="_blank" rel="noopener">카카오맵</a>
         <a id="linkTmap" href="tmap://route?goalname=%EC%84%B8%EC%9D%B8%ED%8A%B8%EB%A9%94%EB%A6%AC%EC%97%98&goalx=127.033009&goaly=37.496085">티맵</a>
       </div>
@@ -1488,6 +1488,66 @@ var PHOTOS=["photos/01.jpg","photos/02.jpg","photos/03.jpg","photos/04.jpg","pho
       toast('주소를 복사했어요');
     }).catch(function(){ toast('복사가 되지 않았어요'); });
   });
+
+  /* ---------- 지도: 네이버 지도 · 티맵 앱 바로 열기 ---------- */
+  (function(){
+    var UA = navigator.userAgent || '';
+    var isIOS = /iPhone|iPad|iPod/i.test(UA);
+    var isAndroid = /Android/i.test(UA);
+
+    var NAME = '%EC%84%B8%EC%9D%B8%ED%8A%B8%EB%A9%94%EB%A6%AC%EC%97%98';   // 세인트메리엘
+    var APPNAME = 'https%3A%2F%2Fhaeeinprep.github.io%2Fjooha-haein%2F';
+    var LAT = '37.496085', LNG = '127.033009';
+
+    /* 앱 실행 → 1.5초 안에 페이지가 숨지 않으면 폴백으로 이동.
+       앱이 열리면 pagehide/visibilitychange로 타이머를 끈다. */
+    function openApp(el, appUrl, fallback){
+      var timer = null;
+      function clearTimer(){ if(timer){ clearTimeout(timer); timer = null; } }
+      window.addEventListener('pagehide', clearTimer);
+      document.addEventListener('visibilitychange', function(){
+        if(document.hidden) clearTimer();
+      });
+      el.addEventListener('click', function(e){
+        e.preventDefault();
+        clearTimer();
+        window.location.href = appUrl;
+        if(!fallback) return;
+        timer = setTimeout(function(){
+          timer = null;
+          if(!document.hidden) window.location.href = fallback;
+        }, 1500);
+      });
+    }
+
+    /* 네이버 지도 — PC는 기본 href(새 탭) 그대로 */
+    var naver = document.getElementById('linkNaver');
+    if(naver && (isIOS || isAndroid)){
+      var nWeb = 'https://map.naver.com/p/search/' + NAME;
+      var nIOS = 'nmap://place?lat=' + LAT + '&lng=' + LNG + '&name=' + NAME + '&appname=' + APPNAME;
+      var nAND = 'intent://place?lat=' + LAT + '&lng=' + LNG + '&name=' + NAME + '&appname=' + APPNAME +
+        '#Intent;scheme=nmap;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;package=com.nhn.android.nmap;end';
+      openApp(naver, isIOS ? nIOS : nAND, nWeb);
+    }
+
+    /* 티맵 */
+    var tmap = document.getElementById('linkTmap');
+    if(tmap){
+      if(isIOS || isAndroid){
+        var tQuery = 'route?goalname=' + NAME + '&goalx=' + LNG + '&goaly=' + LAT;
+        var tIOS = 'tmap://' + tQuery;
+        var tAND = 'intent://' + tQuery +
+          '#Intent;scheme=tmap;action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;package=com.skt.tmap.ku;end';
+        // iOS: 앱·스토어가 없으면 App Store로, Android: intent가 스토어로 넘긴다
+        openApp(tmap, isIOS ? tIOS : tAND, isIOS ? 'https://apps.apple.com/kr/app/id431589174' : null);
+      } else {
+        tmap.addEventListener('click', function(e){
+          e.preventDefault();
+          toast('모바일(티맵 앱)에서 열 수 있어요');
+        });
+      }
+    }
+  })();
 
   document.querySelectorAll('.copy-acct').forEach(function(btn){
     btn.addEventListener('click', function(){
