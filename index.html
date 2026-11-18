@@ -1834,6 +1834,12 @@ var PHOTOS=["photos/01.jpg","photos/02.jpg","photos/03.jpg","photos/04.jpg","pho
       });
     }
     load();
+
+    /* 다른 하객이 남긴 글이 보이도록, 탭으로 돌아오면 조용히 다시 불러온다 */
+    document.addEventListener('visibilitychange', function(){
+      if(document.hidden) return;
+      apiGet().then(function(list){ items = list; render(); }).catch(function(){});
+    });
   })();
 
   /* ---------- 공유 ---------- */
