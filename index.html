@@ -223,13 +223,17 @@ p{margin:0;}
   color:var(--ink);
 }
 .names > span{display:block;}
-/* 커버 이름 — 로아크 파피용 샘플과 같은 시간차 페이드인
-   Jooha(0s) → and(0.6s) → Haein(1.2s). 커버가 열리는 순간(body.cover-in) 시작한다. */
-@keyframes papillonNameFade{0%{opacity:0;}100%{opacity:1;}}
+/* 커버 이름 — 잉크가 스며들 듯 천천히 떠오르는 페이드인
+   Jooha(0.15s) → and(0.75s) → Haein(1.35s), 각 0.95s ease-in-out. 커버가 열리는 순간(body.cover-in) 시작한다. */
+@keyframes papillonNameFade{
+  0%{opacity:0;transform:translateY(2px);}
+  100%{opacity:1;transform:translateY(0);}
+}
 .names > span{opacity:0;}
-body.cover-in .names > span:nth-child(1){animation:papillonNameFade .6s ease-out 0s both;}
-body.cover-in .names > span:nth-child(2){animation:papillonNameFade .6s ease-out .6s both;}
-body.cover-in .names > span:nth-child(3){animation:papillonNameFade .6s ease-out 1.2s both;}
+body.cover-in .names > span{animation:papillonNameFade .95s cubic-bezier(.37,0,.63,1) both;}
+body.cover-in .names > span:nth-child(1){animation-delay:.15s;}
+body.cover-in .names > span:nth-child(2){animation-delay:.75s;}
+body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
 @media (prefers-reduced-motion:reduce){
   .names > span{opacity:1 !important;animation:none !important;}
 }
