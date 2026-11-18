@@ -367,7 +367,7 @@ body.cover-in .names > span:nth-child(3){animation:papillonNameFade .6s ease-out
 }
 .contact-modal.open{display:flex;}
 .contact-panel{
-  width:280px;max-width:100%;max-height:80vh;
+  width:300px;max-width:100%;max-height:80vh;
   display:flex;flex-direction:column;
   background:#fff;border-radius:10px;
   box-shadow:0 18px 50px rgba(0,0,0,.22);
@@ -413,9 +413,10 @@ body.cover-in .names > span:nth-child(3){animation:papillonNameFade .6s ease-out
 }
 .contact-who{display:flex;flex-direction:column;justify-content:center;min-width:0;}
 .contact-role{font:600 14px/1.4 var(--sans);color:#707070;}
-.contact-line{display:flex;align-items:center;gap:8px;margin-top:1px;flex-wrap:wrap;}
-.contact-name{font:600 16px/1.4 var(--sans);color:#1f2937;}
-.contact-tel{font:400 16px/1.2 var(--sans);color:#000;letter-spacing:.01em;}
+/* 이름과 전화번호는 어떤 폭에서도 한 줄: 줄바꿈 금지 */
+.contact-line{display:flex;align-items:center;gap:8px;margin-top:1px;flex-wrap:nowrap;white-space:nowrap;}
+.contact-name{font:600 16px/1.4 var(--sans);color:#1f2937;white-space:nowrap;flex:0 0 auto;}
+.contact-tel{font:400 16px/1.2 var(--sans);color:#000;letter-spacing:.01em;white-space:nowrap;flex:0 0 auto;}
 .contact-pending{font:400 12px/1.2 var(--sans);color:#a0a0a0;}
 .contact-acts{display:flex;align-items:center;gap:10px;flex:0 0 auto;}
 .contact-acts a{
@@ -904,6 +905,12 @@ details[open] .chev{transform:translateY(2px) rotate(225deg);}
 /* 작은 화면 보정 */
 @media (max-width:359px){
   .names{letter-spacing:.01em;}
+}
+/* 좁은 화면(320~359px)에서도 연락처 이름·번호가 한 줄에 들어가도록 여백·간격 축소 */
+@media (max-width:359px){
+  .contact-modal{padding:14px;}
+  .contact-body{padding:16px;}
+  .contact-acts{gap:8px;}
 }
 </style>
 </head>
