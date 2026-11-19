@@ -591,6 +591,8 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
   opacity:0;
   transition:opacity .28s ease;
   overscroll-behavior:contain;
+  /* 위·아래 스와이프 닫기·좌우 넘기기가 브라우저 제스처(당겨서 새로고침 등)에 먹히지 않게 */
+  touch-action:none;
 }
 .lightbox.open{display:grid;opacity:1;}
 .lightbox-figure{
