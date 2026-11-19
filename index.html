@@ -23,6 +23,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<!-- LETTERS 신부측 편지 본문 — 얇게 흘려 쓴 어른 펜글씨 (나눔손글씨 펜, 네이버 무료 배포·웹폰트 허용) -->
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <!-- 카카오톡 공유(세로형 피드 카드)용 JS SDK — KAKAO_JS_KEY 가 채워지면 사용됩니다 -->
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -50,6 +52,7 @@
   --line:#ebebea;
   --serif:"Playfair Display","Times New Roman",serif;
   --hand:"KyoboHandwriting2020A","Nanum Pen Script","Apple SD Gothic Neo",sans-serif;
+  --pen:"Nanum Pen Script","KyoboHandwriting2020A","Apple SD Gothic Neo",sans-serif;
   --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -153,6 +156,7 @@ p{margin:0;}
 .reveal.in{opacity:1;transform:none;}
 @media (prefers-reduced-motion:reduce){
   .reveal{opacity:1;transform:none;transition:none;}
+  .letter-card.reveal{transform:none;transition:none;}
   .petal{display:none;}
 }
 
@@ -422,9 +426,9 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
 .letter-card{
   --notch:4.3cqw;               /* 모서리 파임 반지름 */
   position:relative;
-  width:86%;
+  width:88%;
   margin:0 auto;
-  padding:11cqw 9.5cqw 10cqw;
+  padding:11cqw 8cqw 10cqw;
   background:#f5f4f2;
   text-align:center;
   /* 네 모서리가 안쪽으로 둥글게 파인 티켓형 모서리 */
@@ -445,6 +449,15 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
 }
 .letter-card + .letter-card{margin-top:9cqw;}
 
+/* LETTERS 카드 등장 — 로아크 파피용 샘플(레퍼런스)과 같은 결:
+   아래에서 50px 떠오르며 2.4초에 걸쳐 아주 천천히 앉는다(스프링 곡선 근사). */
+.letter-card.reveal{
+  transform:translateY(50px) translateZ(0);
+  transition:opacity 2.2s cubic-bezier(.33,1,.68,1),transform 2.4s cubic-bezier(.33,1,.68,1);
+}
+.letter-card.reveal.in{transform:translateY(0) translateZ(0);}
+.letter-card + .letter-card.reveal{transition-delay:.22s;}
+
 .letter-to{
   margin:0 0 8cqw;
   font:600 14px/1.2 var(--serif);
@@ -455,7 +468,9 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
 }
 .letter-body{
   margin:0;
-  font:400 15px/2.12 var(--hand);
+  /* 손글씨는 같은 비율로 함께 커지도록 카드 폭 기준(cqw)으로 잡는다 —
+     작은 기기에서도 줄바꿈이 같아 '너겠구나.' 같은 한 단어 줄이 생기지 않는다 */
+  font:400 4.4cqw/2.05 var(--pen);
   letter-spacing:.005em;
   white-space:pre-line;
   word-break:keep-all;
@@ -1054,7 +1069,7 @@ details[open] .chev{transform:translateY(2px) rotate(225deg);}
 </head>
 
 <body>
-<noscript><style>.env-viewport{display:none}.reveal{opacity:1;transform:none}.names > span{opacity:1}.portraits > div{opacity:1 !important;transform:none !important}</style></noscript>
+<noscript><style>.env-viewport{display:none}.reveal,.letter-card.reveal{opacity:1;transform:none}.names > span{opacity:1}.portraits > div{opacity:1 !important;transform:none !important}</style></noscript>
 <div class="card" id="card">
 
   <!-- ===== 배경음악 ===== -->
