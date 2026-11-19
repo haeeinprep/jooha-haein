@@ -63,21 +63,44 @@ body{
   text-rendering:optimizeLegibility;
 }
 img{display:block;max-width:100%;}
-/* 사진 저장 방지 — 길게 누르기 콜아웃·선택·드래그로 사진이 저장되거나 끌려 나가지 않게 한다.
-   방명록 입력(input/textarea)·계좌 복사·라이트박스 확대·지도/공유/BGM 버튼에는 적용하지 않는다. */
+/* 사진 저장 원천 차단 — 손가락이 <img>에 직접 닿지 않게 한다.
+   iOS Safari/WKWebView 는 -webkit-touch-callout:none 만으로는 <img>를 길게 눌렀을 때
+   '사진에 저장' 메뉴를 띄우는 경우가 있어, 히트 타깃 자체를 부모(.cover-photo,
+   .portrait, .pb-item, .ending, .lightbox-figure)로 넘긴다(pointer-events:none).
+   부모가 클릭·핀치·더블탭을 받으므로 포토북 열기·확대·이동은 그대로 동작하고,
+   방명록 입력(input/textarea)·계좌 복사·지도/공유/BGM 버튼에도 적용하지 않는다. */
 img,
+#coverPhoto,
+.cover-photo img,
+.portrait img,
+.pb-item img,
+.ending img,
+.lightbox-figure img,
+#lbImg{
+  pointer-events:none !important;
+  -webkit-touch-callout:none !important;
+  -webkit-user-select:none !important;
+  -moz-user-select:none !important;
+  -ms-user-select:none !important;
+  user-select:none !important;
+  -webkit-user-drag:none !important;
+  -khtml-user-drag:none !important;
+  user-drag:none !important;
+  touch-action:none;
+}
+/* 사진을 감싸는 요소에도 콜아웃·선택·드래그를 막아 둔다(히트 타깃은 이쪽) */
 .cover-photo,
 .portrait,
 .pb-item,
 .ending,
 .lightbox-figure{
-  -webkit-touch-callout:none;
-  -webkit-user-select:none;
-  -moz-user-select:none;
-  -ms-user-select:none;
-  user-select:none;
-  -webkit-user-drag:none;
-  user-drag:none;
+  -webkit-touch-callout:none !important;
+  -webkit-user-select:none !important;
+  -moz-user-select:none !important;
+  -ms-user-select:none !important;
+  user-select:none !important;
+  -webkit-user-drag:none !important;
+  user-drag:none !important;
 }
 button{font-family:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;}
 a{color:inherit;text-decoration:none;}
@@ -572,6 +595,9 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
   width:100%;max-width:430px;height:100%;
   display:grid;place-items:center;
   overflow:hidden;              /* 확대한 사진이 라이트박스 밖으로 넘치지 않게 */
+  /* 사진은 pointer-events:none 이라 터치가 이 컨테이너로 온다 —
+     브라우저 스크롤/확대 대신 이 컨테이너의 핀치·더블탭·드래그 로직을 쓴다 */
+  touch-action:none;
 }
 .lightbox-figure img{
   display:block;width:auto;height:auto;
@@ -1834,7 +1860,20 @@ var PHOTOS=["photos/01.jpg?v=2","photos/02.jpg","photos/03.jpg","photos/04.jpg?v
   document.getElementById('lbNext').addEventListener('click', function(e){
     e.stopPropagation(); nextLb();
   });
-  lb.addEventListener('click', function(e){ if(e.target === lb || e.target === lbFigure) closeLb(); });
+  /* 검은 바깥 여백을 누르면 닫는다. 사진은 pointer-events:none 이라 사진 위의 탭도
+     이 컨테이너로 올라오므로, 누른 지점이 사진 영역 안이면 닫지 않고 넘긴다
+     (더블탭 확대·확대 상태 드래그 이동이 그대로 동작하게). */
+  function tapOnPhoto(e){
+    if(typeof e.clientX !== 'number' || typeof e.clientY !== 'number') return false;
+    var r = lbImg.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 &&
+      e.clientX >= r.left && e.clientX <= r.right &&
+      e.clientY >= r.top && e.clientY <= r.bottom;
+  }
+  lb.addEventListener('click', function(e){
+    if(e.target === lb){ closeLb(); return; }
+    if(e.target === lbFigure && !tapOnPhoto(e)) closeLb();
+  });
   document.addEventListener('keydown', function(e){
     if(!lb.classList.contains('open')) return;
     if(e.key === 'Escape') closeLb();
