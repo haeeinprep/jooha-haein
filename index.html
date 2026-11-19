@@ -231,9 +231,10 @@ p{margin:0;}
   filter:drop-shadow(0 .5px .8px rgba(10,10,14,.30)) drop-shadow(0 .12px .3px rgba(10,10,14,.22));
 }
 .env-orn svg{display:block;width:100%;height:auto;}
-/* 워터마크 — Happily Ever After (원본 391×195 / x14~405, y194~389 자리에 원본 아트워크 그대로) */
+/* 워터마크 — Happily Ever After (원본 391×195 / x14~405, y194~389 자리에 원본 아트워크 그대로)
+   위치 요청: 약 0.1cm(4px) 만큼 위로 — 나머지 비율·크기는 그대로 */
 .env-happy{
-  position:absolute;left:3.2374%;top:13.5070%;width:93.525%;height:12.2167%;
+  position:absolute;left:3.2374%;top:calc(13.5070% - 4px);width:93.525%;height:12.2167%;
   background:no-repeat center/100% 100%;
   pointer-events:none;
 }
@@ -241,7 +242,8 @@ p{margin:0;}
    원본 샘플이 화면에서 이 블록을 봉투 좌표보다 20.5px 아래에 그립니다(오버레이 레이어) — 그 위치에 맞춤 */
 .env-lettering{
   position:absolute;inset:0;width:100%;height:100%;display:block;
-  transform:translateY(1.373%);
+  /* 블록 아래 20.5px 보정 + 요청한 4px(약 0.1cm) 위로 이동 */
+  transform:translateY(calc(1.373% - 4px));
   pointer-events:none;
 }
 
@@ -1988,17 +1990,26 @@ var PHOTOS=["photos/01.jpg?v=2","photos/02.jpg","photos/03.jpg","photos/04.jpg?v
     if(e.touches.length === 0) zTap = null;
   }, {passive:true});
 
-  /* 좌우로 밀어서 넘기기 (확대하지 않은 상태에서만) */
-  var tsX = 0, tsY = 0, tsT = 0;
+  /* 좌우로 밀어서 넘기기 (확대하지 않은 상태에서만) · 위아래로 밀어 닫기 */
+  var tsX = 0, tsY = 0, tsT = 0, tsValid = false;
   lb.addEventListener('touchstart', function(e){
-    if(e.touches.length !== 1 || zS > 1.001) return;
-    tsX = e.touches[0].clientX; tsY = e.touches[0].clientY; tsT = Date.now();
+    if(e.touches.length !== 1){ tsValid = false; return; }
+    tsX = e.touches[0].clientX; tsY = e.touches[0].clientY; tsT = Date.now(); tsValid = true;
   }, {passive:true});
   lb.addEventListener('touchend', function(e){
-    if(!e.changedTouches.length || zS > 1.001) return;
+    if(!tsValid || !e.changedTouches.length) return;
     var dx = e.changedTouches[0].clientX - tsX;
     var dy = e.changedTouches[0].clientY - tsY;
-    if(Math.abs(dx) > 42 && Math.abs(dx) > Math.abs(dy) * 1.3 && Date.now() - tsT < 800){
+    var adx = Math.abs(dx), ady = Math.abs(dy);
+    /* 위·아래로 밀어 닫기 — 기본 크기(zS <= 1.05)일 때만.
+       확대 상태의 세로 드래그는 사진 이동(팬)에 쓰이므로 닫지 않는다. */
+    if(zS <= 1.05 && ady > 55 && ady > adx && Date.now() - tsT < 900){
+      closeLb();
+      tsValid = false;
+      return;
+    }
+    if(zS > 1.001) return;
+    if(adx > 42 && adx > ady * 1.3 && Date.now() - tsT < 800){
       if(dx < 0) nextLb(); else prevLb();
     }
   }, {passive:true});
