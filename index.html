@@ -63,6 +63,22 @@ body{
   text-rendering:optimizeLegibility;
 }
 img{display:block;max-width:100%;}
+/* 사진 저장 방지 — 길게 누르기 콜아웃·선택·드래그로 사진이 저장되거나 끌려 나가지 않게 한다.
+   방명록 입력(input/textarea)·계좌 복사·라이트박스 확대·지도/공유/BGM 버튼에는 적용하지 않는다. */
+img,
+.cover-photo,
+.portrait,
+.pb-item,
+.ending,
+.lightbox-figure{
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  user-select:none;
+  -webkit-user-drag:none;
+  user-drag:none;
+}
 button{font-family:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;}
 a{color:inherit;text-decoration:none;}
 p{margin:0;}
@@ -1497,6 +1513,25 @@ var PHOTOS=["photos/01.jpg?v=2","photos/02.jpg","photos/03.jpg","photos/04.jpg?v
   });
   document.addEventListener('touchmove', function(e){
     if(e.touches && e.touches.length > 1) e.preventDefault();
+  }, {passive:false});
+
+  /* ---------- 사진 저장 방지 ----------
+     사진 위에서 우클릭·길게 누르기(콜아웃)·드래그로 저장/끌어내기가 되지 않게 한다.
+     사진 요소에만 걸어서 방명록 입력, 계좌 복사, 라이트박스 핀치·더블탭·드래그 이동,
+     지도·공유·BGM 버튼의 클릭은 그대로 동작한다. */
+  var PHOTO_SEL = 'img,.cover-photo,.portrait,.pb-item,.ending,.lightbox-figure';
+  function onPhoto(t){
+    return !!(t && t.closest && t.closest(PHOTO_SEL));
+  }
+  document.addEventListener('contextmenu', function(e){
+    if(onPhoto(e.target)) e.preventDefault();
+  }, {passive:false});
+  document.addEventListener('dragstart', function(e){
+    if(onPhoto(e.target)) e.preventDefault();
+  }, {passive:false});
+  /* iOS: 사진을 길게 눌렀을 때 선택 핸들이 뜨지 않게 */
+  document.addEventListener('selectstart', function(e){
+    if(onPhoto(e.target) && !(e.target.closest && e.target.closest('input,textarea'))) e.preventDefault();
   }, {passive:false});
 
   /* ============================================================
