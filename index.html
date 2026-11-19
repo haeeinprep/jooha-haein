@@ -2003,7 +2003,7 @@ var PHOTOS=["photos/01.jpg?v=2","photos/02.jpg","photos/03.jpg","photos/04.jpg?v
     var adx = Math.abs(dx), ady = Math.abs(dy);
     /* 위·아래로 밀어 닫기 — 기본 크기(zS <= 1.05)일 때만.
        확대 상태의 세로 드래그는 사진 이동(팬)에 쓰이므로 닫지 않는다. */
-    if(zS <= 1.05 && ady > 55 && ady > adx && Date.now() - tsT < 900){
+    if(zS <= 1.05 && ady > 55 && ady > adx){
       closeLb();
       tsValid = false;
       return;
