@@ -412,8 +412,7 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
 
 /* ============================================================
    4-c. LETTERS (혼주 편지) — 네 모서리를 안쪽으로 파낸 티켓 카드
-   ※ 신랑측 말씀이 도착하면 .letter-card 를 하나 더 위에 넣고
-     라벨만 <p class="letter-to">Groom</p> 로 바꾸면 된다.
+   신랑측(Groom)·신부측(Bride) 모두 같은 카드 구조·폰트·여백을 쓴다.
    ============================================================ */
 .letters{
   position:relative;
@@ -449,27 +448,17 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
 }
 .letter-card + .letter-card{margin-top:9cqw;}
 
-/* 신랑측 편지 — 어머님(양정임) 손편지 원본 필체(투명 PNG, 노트 줄·배경 제거본).
-   본문 이미지는 좌우 살짝 커서 여백 없이 자연스럽게: padding을 2cqw로 줄인다. */
-.letter-card.groom{
-  padding:9cqw 2cqw 8cqw;
-}
-.letter-hand{
-  display:block;
-  width:84cqw;
-  max-width:100%;
-  height:auto;
-  margin:0 auto;
-}
-
-/* LETTERS 카드 등장 — 로아크 파피용 샘플(레퍼런스)과 같은 결:
-   아래에서 50px 떠오르며 2.4초에 걸쳐 아주 천천히 앉는다(스프링 곡선 근사). */
+/* LETTERS 카드 등장 — 아래에서 72px 떠오르며 1.9초에 걸쳐 천천히 앉는다.
+   ※ 예전엔 50px/2.4초에 끝이 급한 곡선이라, 카드가 화면 아래 끝에서 12%만
+     보일 때 시작해 버려 다 오르고 나서야 눈에 들어왔다(모션이 없는 것처럼 보임).
+     ① 카드가 화면 안쪽(25%)까지 들어와서 시작하고 ② 이동 거리를 키우고
+     ③ 곡선을 고르게 펴서, 카드가 눈앞에서 실제로 떠오르는 것이 보이게 한다. */
 .letter-card.reveal{
-  transform:translateY(50px) translateZ(0);
-  transition:opacity 2.2s cubic-bezier(.33,1,.68,1),transform 2.4s cubic-bezier(.33,1,.68,1);
+  transform:translateY(72px) translateZ(0);
+  transition:opacity 1.6s cubic-bezier(.22,.61,.36,1),transform 1.9s cubic-bezier(.22,.61,.36,1);
 }
 .letter-card.reveal.in{transform:translateY(0) translateZ(0);}
-.letter-card + .letter-card.reveal{transition-delay:.22s;}
+.letter-card + .letter-card.reveal{transition-delay:.16s;}
 
 .letter-to{
   margin:0 0 8cqw;
@@ -1277,10 +1266,23 @@ details[open] .chev{transform:translateY(2px) rotate(225deg);}
     <section class="letters" aria-labelledby="lettersTitle">
       <h2 class="sec-title reveal" id="lettersTitle">Letters</h2>
 
-      <!-- 신랑측: 어머님(양정임) 손편지 원본 필체 그대로 (노트 줄·종이 배경 제거 투명 PNG) -->
+      <!-- 신랑측: 어머님(양정임) 편지 — 신부측 카드와 같은 서체·크기·여백의 텍스트 -->
       <div class="letter-card groom reveal">
         <p class="letter-to">Groom</p>
-        <img class="letter-hand" src="photos/groom_mother_handwriting.png" alt="어머님 손편지 — 결혼 축하해. 이렇게 지리 좋은 인연을 만나 결혼한다니 참 대단하고 다행구나" draggable="false">
+        <p class="letter-body">결혼 축하해 주하야
+
+어느새 이렇게 자라 좋은 인연을 만나
+결혼한다니 참 대견하고 고맙구나.
+지금까지처럼 따뜻하고 성실한 마음으로
+서로 아끼고 존중하며 예쁘게 잘 살길 바란다.
+
+살면서 힘든 순간이 와도
+언제나 해인이 편이 되어주고
+서로 웃는 날을 많이 만들어 가길 바란다.
+엄마는 늘 네 편이고.
+
+두 사람의 앞날을 진심으로 축복해.
+사랑한다 아들아</p>
         <p class="letter-from">From. 양정임</p>
       </div>
 
@@ -1782,7 +1784,17 @@ var PHOTOS=["photos/01.jpg?v=2","photos/02.jpg","photos/03.jpg","photos/04.jpg?v
         if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
       });
     }, {threshold:.12, rootMargin:'0px 0px -8% 0px'});
-    reveals.forEach(function(el){ io.observe(el); });
+    /* 편지 카드는 카드가 화면 안쪽(아래에서 14% 위)까지 들어와 25% 이상 보일 때 시작한다.
+       화면 맨 아래 끝에서 시작하면 다 떠오른 뒤에야 눈에 들어와 모션이 없는 것처럼 보인다. */
+    var ioLetters = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); ioLetters.unobserve(e.target); }
+      });
+    }, {threshold:.25, rootMargin:'0px 0px -14% 0px'});
+    reveals.forEach(function(el){
+      if(el.classList.contains('letter-card')) ioLetters.observe(el);
+      else io.observe(el);
+    });
   } else {
     reveals.forEach(function(el){ el.classList.add('in'); });
   }
