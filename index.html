@@ -37,6 +37,15 @@
   font-style:normal;
   font-display:swap;
 }
+/* 신랑측(어머님) 편지 본문 — 나눔손글씨 강부장님체 (네이버 무료 배포, 웹폰트 허용).
+   CDN 의존 없이 같은 저장소에 둔 서브셋(KS X 1001 한글 2,350자 + 영문·문장부호)을 쓴다. */
+@font-face{
+  font-family:'Nanum GangBuJangNimCe';
+  src:url('fonts/NanumGangBuJangNimCe-subset.woff2') format('woff2');
+  font-weight:normal;
+  font-style:normal;
+  font-display:swap;
+}
 </style>
 
 <style>
@@ -53,6 +62,7 @@
   --serif:"Playfair Display","Times New Roman",serif;
   --hand:"KyoboHandwriting2020A","Nanum Pen Script","Apple SD Gothic Neo",sans-serif;
   --pen:"Nanum Pen Script","KyoboHandwriting2020A","Apple SD Gothic Neo",sans-serif;
+  --pen-groom:"Nanum GangBuJangNimCe","Nanum Pen Script","KyoboHandwriting2020A","Apple SD Gothic Neo",sans-serif;
   --sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -478,6 +488,13 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
   word-break:keep-all;
   color:#1a1a1a;
   text-align:center;
+}
+/* 신랑측 편지는 강부장님체 — 획이 굵고 자폭이 넓어 같은 4.55cqw 에서는 줄이 넘치므로
+   크기를 살짝 줄이고 행간을 조금 넓혀 신부측 카드와 나란히 봐도 읽기 편하게 맞춘다. */
+.letter-card.groom .letter-body{
+  font-family:var(--pen-groom);
+  font-size:4.2cqw;
+  line-height:2.15;
 }
 .letter-from{
   margin:9.5cqw 0 0;
