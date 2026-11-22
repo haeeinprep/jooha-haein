@@ -1791,21 +1791,54 @@ var PHOTOS=["photos/01.jpg?v=2","photos/02.jpg","photos/03.jpg","photos/04.jpg?v
   }, {passive:true});
   envUpdate();
 
-  /* ---------- 섹션 등장 ---------- */
+  /* ---------- 섹션 등장 (스크롤 왕복마다 다시 재생) ----------
+     · 등장(.in 추가): 예전과 같은 진입 조건을 만족할 때 — 일반 요소 io(12% & 아래 8% 여백),
+       편지 카드 ioLetters(25% & 아래 14% 여백). 관찰은 끊지 않아 다시 들어올 때마다 재생된다.
+     · 리셋(.in 제거): 요소가 뷰포트와 한 픽셀도 겹치지 않게 완전히 벗어났을 때만
+       (rect.bottom <= 0 || rect.top >= innerHeight) 실행한다.
+       리셋 순간에는 transition 을 잠시 꺼서 초기 상태로 즉시 되돌린다 — 화면 밖이라
+       점프가 보이지 않고, 화면에 일부라도 남아 있는 동안에는 절대 꺼지지 않는다.
+       (IntersectionObserver 의 콜백은 스크롤보다 한 박자 늦게 도착해 이미 다시 보이는
+        요소를 끄거나 꺼야 할 요소를 놓칠 수 있어서, 리셋 판정은 실제 rect 로 한다.) */
   var reveals = document.querySelectorAll('.reveal');
   if('IntersectionObserver' in window){
+    var revealEls = Array.prototype.slice.call(reveals);
+    function revealOn(el){
+      if(el.classList.contains('in')) return;
+      el.style.transition = '';        // 리셋 때 껐던 전환을 되살리고
+      void el.offsetWidth;             // 되살린 전환 규칙을 먼저 확정한 뒤
+      el.classList.add('in');          // 등장시켜, 다시 들어올 때도 전환이 살아 있게 한다
+    }
+    function revealOff(el){
+      if(!el.classList.contains('in')) return;
+      el.style.transition = 'none';    // 화면 밖이므로 전환 없이 초기 상태로 즉시 복귀
+      el.classList.remove('in');
+      void el.offsetWidth;
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.style.transition = ''; }); });
+    }
     var io = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){
-        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
-      });
+      entries.forEach(function(e){ if(e.isIntersecting) revealOn(e.target); });
     }, {threshold:.12, rootMargin:'0px 0px -8% 0px'});
     /* 편지 카드는 카드가 화면 안쪽(아래에서 14% 위)까지 들어와 25% 이상 보일 때 시작한다.
        화면 맨 아래 끝에서 시작하면 다 떠오른 뒤에야 눈에 들어와 모션이 없는 것처럼 보인다. */
     var ioLetters = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){
-        if(e.isIntersecting){ e.target.classList.add('in'); ioLetters.unobserve(e.target); }
-      });
+      entries.forEach(function(e){ if(e.isIntersecting) revealOn(e.target); });
     }, {threshold:.25, rootMargin:'0px 0px -14% 0px'});
+    /* 스크롤 프레임마다 실제 위치로 리셋 대상만 골라낸다 (화면에 남아 있으면 절대 건드리지 않음) */
+    var resetQueued = false;
+    function syncReveals(){
+      resetQueued = false;
+      var vh = window.innerHeight;
+      for(var k = 0; k < revealEls.length; k++){
+        var el = revealEls[k];
+        if(!el.classList.contains('in')) continue;
+        var r = el.getBoundingClientRect();
+        if(r.bottom <= 0 || r.top >= vh) revealOff(el);   // 완전히 화면 밖으로 벗어났을 때만
+      }
+    }
+    window.addEventListener('scroll', function(){
+      if(!resetQueued){ resetQueued = true; requestAnimationFrame(syncReveals); }
+    }, {passive:true});
     reveals.forEach(function(el){
       if(el.classList.contains('letter-card')) ioLetters.observe(el);
       else io.observe(el);
