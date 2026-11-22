@@ -348,14 +348,15 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
   padding:10cqw 0;
   overflow-x:clip;             /* 양옆에서 들어오는 모션이 가로 스크롤을 만들지 않게 */
 }
-/* Groom / Bride — 화면에 들어오면(.in) 양옆에서 부드럽게 들어와 고정된다 */
+/* Groom / Bride — 화면에 들어오면(.in) 양옆에서 부드럽게 들어와 고정된다.
+   ※ 사용자 요청으로 아주 살짝 느리게: 0.85s → 1.12s(약 1.3배), 양쪽 시간차도 0.1 → 0.14s */
 .portraits > div:first-child{opacity:0;transform:translateX(-36px);}
 .portraits > div:last-child{opacity:0;transform:translateX(36px);}
 .portrait-band.in .portraits > div{
-  transition:opacity .85s cubic-bezier(.22,.61,.36,1),transform .85s cubic-bezier(.22,.61,.36,1);
+  transition:opacity 1.12s cubic-bezier(.22,.61,.36,1),transform 1.12s cubic-bezier(.22,.61,.36,1);
   opacity:1;transform:translateX(0);
 }
-.portrait-band.in .portraits > div:last-child{transition-delay:.1s;}
+.portrait-band.in .portraits > div:last-child{transition-delay:.14s;}
 @media (prefers-reduced-motion:reduce){
   .portraits > div:first-child,.portraits > div:last-child{opacity:1;transform:none;transition:none;}
 }
