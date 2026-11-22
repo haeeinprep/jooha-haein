@@ -449,6 +449,19 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
 }
 .letter-card + .letter-card{margin-top:9cqw;}
 
+/* 신랑측 편지 — 어머님(양정임) 손편지 원본 필체(투명 PNG, 노트 줄·배경 제거본).
+   본문 이미지는 좌우 살짝 커서 여백 없이 자연스럽게: padding을 2cqw로 줄인다. */
+.letter-card.groom{
+  padding:9cqw 2cqw 8cqw;
+}
+.letter-hand{
+  display:block;
+  width:84cqw;
+  max-width:100%;
+  height:auto;
+  margin:0 auto;
+}
+
 /* LETTERS 카드 등장 — 로아크 파피용 샘플(레퍼런스)과 같은 결:
    아래에서 50px 떠오르며 2.4초에 걸쳐 아주 천천히 앉는다(스프링 곡선 근사). */
 .letter-card.reveal{
@@ -1264,8 +1277,13 @@ details[open] .chev{transform:translateY(2px) rotate(225deg);}
     <section class="letters" aria-labelledby="lettersTitle">
       <h2 class="sec-title reveal" id="lettersTitle">Letters</h2>
 
-      <!-- 신랑측 말씀이 도착하면 이 카드 바로 위에 같은 .letter-card 를 하나 더 넣고
-           라벨만 <p class="letter-to">Groom</p> 으로 바꾸면 됩니다. -->
+      <!-- 신랑측: 어머님(양정임) 손편지 원본 필체 그대로 (노트 줄·종이 배경 제거 투명 PNG) -->
+      <div class="letter-card groom reveal">
+        <p class="letter-to">Groom</p>
+        <img class="letter-hand" src="photos/groom_mother_handwriting.png" alt="어머님 손편지 — 결혼 축하해. 이렇게 지리 좋은 인연을 만나 결혼한다니 참 대단하고 다행구나" draggable="false">
+        <p class="letter-from">From. 양정임</p>
+      </div>
+
       <div class="letter-card reveal">
         <p class="letter-to">Bride</p>
         <p class="letter-body">세상 소중한 핸아,
