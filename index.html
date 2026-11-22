@@ -828,52 +828,68 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
 .gb-nav .num.cur,.pb-nav .num.cur{background:#d7d4cf;color:#2c2825;}
 .gb-nav .gap,.pb-nav .gap{font:400 12px/1 var(--serif);color:#b7b3ae;padding:0 2px;letter-spacing:.05em;}
 
-/* 카드 2열 */
+/* 카드 2열 — 로아크 파피용 샘플과 같은 규격(카드 420:444, 여백 6cqw, 간격 2cqw) */
 .gb-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:2.4cqw;
-  padding:0 8.5cqw;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:2cqw;
+  padding:0 8cqw;
 }
 .gb-card{
-  display:flex;
-  flex-direction:column;
-  aspect-ratio:1/1.02;
-  background:#f4f3f1;
-  padding:5.2cqw 4.6cqw 4.2cqw;
+  position:relative;
+  min-width:0;
+  aspect-ratio:420/444;
+  background:#f5f5f5;
+  overflow:hidden;
   text-align:left;
+  cursor:pointer;
 }
+.gb-inner{
+  position:absolute;inset:0;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto;
+  row-gap:2cqw;
+  padding:6cqw;
+}
+.gb-msgwrap{min-height:0;overflow:hidden;}
 .gb-msg{
-  flex:1 1 auto;
-  font:400 12.4px/1.72 var(--sans);
-  letter-spacing:-.01em;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:5;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font:400 12px/1.7 var(--sans);
+  letter-spacing:-.005em;
   color:#2b2b2b;
   white-space:pre-line;
-  word-break:keep-all;
-  overflow:hidden;
+  word-break:break-word;
+  overflow-wrap:anywhere;
 }
-.gb-foot{
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:6px;
-  margin-top:2.4cqw;
+/* 좁은 화면(390px 미만)에서는 5줄이 카드 높이를 넘어 마지막 줄이 잘리므로 4줄까지만 보여 준다 */
+@container (max-width: 389px){
+  .gb-msg{-webkit-line-clamp:4;}
 }
 .gb-name{
-  font:400 11px/1.3 var(--sans);
-  color:#6f6b66;
-  letter-spacing:.01em;
+  position:relative;
+  margin:0;
+  padding-right:16px;
+  font:400 12px/1 var(--sans);
+  color:#666;
+  letter-spacing:0;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 .gb-del{
-  flex:0 0 auto;
-  width:20px;height:20px;
-  display:grid;place-items:center;
-  color:#a9a5a0;
+  position:absolute;
+  bottom:-13px;right:-13px;
+  z-index:2;
+  width:40px;height:40px;
+  display:inline-flex;align-items:center;justify-content:center;
+  color:#7a7a7a;
+  opacity:.55;
 }
-.gb-del:active{color:#6f6b66;}
+.gb-del:active{opacity:.9;}
 .gb-empty{
   grid-column:1/-1;
   padding:9cqw 0 2cqw;
@@ -886,12 +902,13 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  height:50px;
-  padding:0 32px;
-  background:#3a3835;
+  width:180px;
+  height:44px;
+  background:#353535;
   color:#fff;
-  font:400 14px/1 var(--sans);
+  font:600 14px/1 var(--sans);
   letter-spacing:.02em;
+  border-radius:2px;
 }
 
 /* 방명록 작성·삭제 모달 */
@@ -959,6 +976,27 @@ body.cover-in .names > span:nth-child(3){animation-delay:1.35s;}
 .gb-cancel{background:#f2f0ed;color:#4a4742;}
 .gb-submit{background:#3a3835;color:#fff;}
 .gb-submit[disabled]{opacity:.55;cursor:default;}
+
+/* 방명록 읽기 모달 — 5줄로 줄어든 축하 메시지 전체 보기 */
+.gb-read-name{
+  margin:0 0 13px;
+  padding-bottom:12px;
+  border-bottom:1px solid #ece9e5;
+  font:600 12.5px/1.3 var(--sans);
+  letter-spacing:.02em;
+  color:#3d3a36;
+}
+.gb-read-msg{
+  font:400 13px/1.8 var(--sans);
+  letter-spacing:-.005em;
+  color:#2b2b2b;
+  white-space:pre-line;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  max-height:46vh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
 
 /* ============================================================
    9. WEDDING GIFT
@@ -1640,6 +1678,19 @@ details[open] .chev{transform:translateY(2px) rotate(225deg);}
   </form>
 </div>
 
+<!-- 방명록 읽기 모달 — 카드를 누르면 축하 메시지 전체 보기 -->
+<div class="gb-modal" id="gbReadModal" role="dialog" aria-modal="true" aria-labelledby="gbReadTitle">
+  <div class="gb-panel">
+    <h3 id="gbReadTitle">축하의 한 마디</h3>
+    <p class="hint">두 사람에게 남겨주신 축하 메시지</p>
+    <p class="gb-read-name" id="gbReadName"></p>
+    <p class="gb-read-msg" id="gbReadMsg"></p>
+    <div class="gb-actions">
+      <button type="button" class="gb-cancel" id="gbReadClose">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 축하 연락하기 모달 — 1단계 신랑측/신부측 선택, 2단계 연락처 목록 -->
 <div class="contact-modal" id="contactModal" role="dialog" aria-modal="true" aria-label="축하 연락처" aria-hidden="true">
   <div class="contact-panel">
@@ -2275,7 +2326,7 @@ var PHOTOS=["photos/01.jpg?v=2","photos/02.jpg","photos/03.jpg","photos/04.jpg?v
     var GUESTBOOK_API = 'https://script.google.com/macros/s/AKfycbwPO-PFKGTvpPGX7p-fR3BAzWiXkkT1MH2qS4DtIBe7Ywd9P3OfKkXumoBpxnF21-xs/exec';
     var PER = 4;                                  // 한 페이지에 4개 (2열 × 2행)
 
-    var TRASH = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9.6 7V5.2h4.8V7"/><path d="M6.7 7l.75 12.1h9.1L17.3 7"/><path d="M10.2 10.7v5.4M13.8 10.7v5.4"/></svg>';
+    var TRASH = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9.6 7V5.2h4.8V7"/><path d="M6.7 7l.75 12.1h9.1L17.3 7"/><path d="M10.2 10.7v5.4M13.8 10.7v5.4"/></svg>';
     var ARR_L = '<svg width="8" height="15" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M6.4 1.4L1.6 7l4.8 5.6"/></svg>';
     var ARR_R = '<svg width="8" height="15" viewBox="0 0 8 14" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M1.6 1.4L6.4 7l-4.8 5.6"/></svg>';
 
@@ -2307,11 +2358,12 @@ var PHOTOS=["photos/01.jpg?v=2","photos/02.jpg","photos/03.jpg","photos/04.jpg?v
       grid.classList.remove('is-empty');
       nav.style.display = '';
       grid.innerHTML = slice.map(function(m){
-          return '<article class="gb-card">'
-               +   '<p class="gb-msg">' + esc(m.msg) + '</p>'
-               +   '<div class="gb-foot">'
-               +     '<span class="gb-name">' + esc(m.name) + '</span>'
-               +     '<button class="gb-del" type="button" data-id="' + esc(m.id) + '" aria-label="' + esc(m.name) + '님 메시지 삭제">' + TRASH + '</button>'
+          return '<article class="gb-card" data-id="' + esc(m.id) + '" tabindex="0" aria-label="' + esc(m.name) + '님 축하 메시지 전체 보기">'
+               +   '<div class="gb-inner">'
+               +     '<div class="gb-msgwrap"><p class="gb-msg">' + esc(m.msg) + '</p></div>'
+               +     '<p class="gb-name">' + esc(m.name)
+               +       '<button class="gb-del" type="button" data-id="' + esc(m.id) + '" aria-label="' + esc(m.name) + '님 메시지 삭제">' + TRASH + '</button>'
+               +     '</p>'
                +   '</div>'
                + '</article>';
       }).join('');
@@ -2473,20 +2525,51 @@ var PHOTOS=["photos/01.jpg?v=2","photos/02.jpg","photos/03.jpg","photos/04.jpg?v
 
     grid.addEventListener('click', function(e){
       var b = e.target.closest('.gb-del');
-      if(!b) return;
-      var id = b.getAttribute('data-id');
-      var target = null;
-      items.forEach(function(m){ if(m.id === id) target = m; });
-      if(!target) return;
-      delTarget = target;
-      delForm.reset();
-      delHint.textContent = '등록할 때 정한 비밀번호를 입력해 주세요';
-      openModal(delModal);
-      setTimeout(function(){ delPw.focus(); }, 80);
+      if(b){
+        var id = b.getAttribute('data-id');
+        var target = null;
+        items.forEach(function(m){ if(m.id === id) target = m; });
+        if(!target) return;
+        delTarget = target;
+        delForm.reset();
+        delHint.textContent = '등록할 때 정한 비밀번호를 입력해 주세요';
+        openModal(delModal);
+        setTimeout(function(){ delPw.focus(); }, 80);
+        return;
+      }
+      var card = e.target.closest('.gb-card');
+      if(card) openRead(card.getAttribute('data-id'));
     });
 
     document.getElementById('gbDelCancel').addEventListener('click', function(){ closeModal(delModal); });
     delModal.addEventListener('click', function(e){ if(e.target === delModal) closeModal(delModal); });
+
+    /* ---------- 읽기 모달: 카드를 누르면 축하 메시지 전체 보기 ---------- */
+    var readModal = document.getElementById('gbReadModal');
+    var readName = document.getElementById('gbReadName');
+    var readMsg = document.getElementById('gbReadMsg');
+
+    function openRead(id){
+      var target = null;
+      items.forEach(function(m){ if(m.id === id) target = m; });
+      if(!target) return;
+      readName.textContent = target.name;
+      readMsg.textContent = target.msg;
+      readMsg.scrollTop = 0;
+      openModal(readModal);
+    }
+
+    document.getElementById('gbReadClose').addEventListener('click', function(){ closeModal(readModal); });
+    readModal.addEventListener('click', function(e){ if(e.target === readModal) closeModal(readModal); });
+
+    /* 카드 본문은 읽기 모달로, 우하단 휴지통은 기존처럼 삭제 모달로 */
+    grid.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+      var card = e.target.closest ? e.target.closest('.gb-card') : null;
+      if(!card || (e.target.closest && e.target.closest('.gb-del'))) return;
+      e.preventDefault();
+      openRead(card.getAttribute('data-id'));
+    });
 
     delForm.addEventListener('submit', function(e){
       e.preventDefault();
@@ -2520,7 +2603,8 @@ var PHOTOS=["photos/01.jpg?v=2","photos/02.jpg","photos/03.jpg","photos/04.jpg?v
 
     document.addEventListener('keydown', function(e){
       if(e.key !== 'Escape') return;
-      if(delModal.classList.contains('open')) closeModal(delModal);
+      if(readModal.classList.contains('open')) closeModal(readModal);
+      else if(delModal.classList.contains('open')) closeModal(delModal);
       else if(modal.classList.contains('open')) closeModal(modal);
     });
 
